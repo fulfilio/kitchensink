@@ -1,5 +1,6 @@
 from itertools import chain, groupby
 
+from flask_login import login_required
 from flask import Blueprint, render_template
 from .extensions import fulfil
 
@@ -11,6 +12,7 @@ StockMove = fulfil.model('stock.move')
 
 
 @shipment.route('/items-waiting')
+@login_required
 def waiting():
     """
     Waiting shipments
@@ -61,3 +63,36 @@ def waiting():
         categories=sorted(categories.items(), key=lambda item: item[1]),
     )
 
+
+@shipment.route('/plan-by-product')
+@login_required
+def plan_by_product():
+    """
+    Show a plan by product
+    """
+    fields = [
+        'product',
+        'product.code',
+        'product.variant_name',
+        'product.template.name',
+        'internal_quantity',
+        'planned_date',
+    ]
+    outgoing_moves = StockMove.search_read([
+        ('to_location.type', '=', 'customer'),
+        ('state', 'in', ('draft', 'assigned')),
+    ], None, None, [('planned_date', 'ASC')], fields)
+    df = pd.DataFrame(outgoing_moves)
+    pivot_table = pd.pivot_table(
+        df,
+        index=["product.template.name", "product.code"],
+        columns=["planned_date"],
+        values=["internal_quantity"],
+        fill_value=0,
+        aggfunc="sum"
+    )
+    return render_template(
+        'plan-by-product.html',
+        table_html=pivot_table.to_html()
+
+    )
