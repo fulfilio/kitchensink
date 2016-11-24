@@ -1,4 +1,5 @@
 from itertools import chain, groupby
+import pandas as pd
 
 from flask_login import login_required
 from flask import Blueprint, render_template
@@ -88,7 +89,7 @@ def plan_by_product():
         index=["product.template.name", "product.code"],
         columns=["planned_date"],
         values=["internal_quantity"],
-        fill_value=0,
+        fill_value="",
         aggfunc="sum"
     )
     return render_template(
