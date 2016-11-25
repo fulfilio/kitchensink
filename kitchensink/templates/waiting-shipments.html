@@ -61,13 +61,16 @@
               </td>
               <td class="col-xs-5">
                 <div class="col-xs-4">
-                  <b>Available:</b> {{ moves[0]['quantity_available'] }}
+                  <b>Available:</b> {{ moves[0]['quantity_available']|int }}
+                  <br/>
+                  <b>On Hand:</b> {{ moves[0]['product.quantity_on_hand']|int }}
                 </div>
                 <div class="col-xs-4">
-                  <b>{{ moves[0]['product.template.account_category.rec_name'] }}</b>
-                </div>              
+                  <b>Category:</b><br/>
+                  {{ moves[0]['product.template.account_category.rec_name'] }}
+                </div>
                 <div class="col-xs-4">
-                  <b>Overall Waiting:</b> {{ moves|sum(attribute='quantity') }}
+                  <b>Waiting:</b> {{ moves|sum(attribute='quantity')|int }}
                 </div>
               </td>
             </tr>
@@ -82,7 +85,7 @@
                         <th>Sale Date</th>
                         <th>Planned Date</th>
                         <th class="text-right">Quantity</th>
-                        <th class="text-right">State</th>
+                        <th class="text-right">Inventory Status</th>
                       </thead>
                       <tbody>
                         {% for move in moves %}
@@ -91,7 +94,7 @@
                             data-quantity="move['quantity']"
                             >
                             <td>
-                              <a href="https://lie-nielsen.fulfil.io/client/#/model/stock.shipment.out/{{ move['shipment']['id'] }}" target="new">
+                              <a href="{{ 'stock.shipment.out'|client_url(move['shipment']['id']) }}" target="new">
                                 {{ move['shipment']['number'] or '-' }}
                               </a>
                               {% if move['children'] %}
@@ -102,8 +105,16 @@
                             <td>{{ move['shipment']['customer.name'] }}</td>
                             <td>{{ move['shipment']['sale_date']|dateformat }}</td>
                             <td>{{ move['planned_date']|dateformat }}</td>
-                            <td class="text-right">{{ move['quantity'] }}</td>
-                            <td class="text-capitalize text-right">{{ move['state'] }}</td>
+                            <td class="text-right">{{ move['quantity']|int }}</td>
+                            <td class="text-capitalize text-right">
+                            {% if move['state'] == 'draft' %}
+                            Waiting
+                            <button type="button" class="btn btn-success btn-assign btn-small" data-url="{{ url_for('move.assign', move_id=move['id']) }}">Assign</button>
+                            {% elif move['state'] == 'assigned' %}
+                            Assigned
+                            <button type="button" class="btn btn-warning btn-wait btn-small" data-url="{{ url_for('move.wait', move_id=move['id']) }}">Un-Assign</button>
+                            {% endif %}
+                            </td>
                           </tr>
                         {% endfor %}
                       </tbody>
@@ -155,6 +166,33 @@
 
       // On every change of input re render
       $('input').change(renderAgain);
+
+      $('.btn-assign').click(function() {
+        var button = $(this);
+        button.attr('disabled', true);
+        button.text("Assigning...");
+        $.post($(this).data('url'))
+        .success(function(data) {
+          button.hide();
+          button.parent('td').html('Assigned');
+        })
+        .error(function(data) {
+          alert('Could not assign inventory!');
+        });
+      });
+      $('.btn-wait').click(function() {
+        var button = $(this);
+        button.attr('disabled', true);
+        button.text("un-assigning...");
+        $.post($(this).data('url'))
+        .success(function(data) {
+          button.hide();
+          button.parent('td').html('Waiting');
+        })
+        .error(function(data) {
+          alert('Could not un-assign inventory!');
+        });
+      });
     })
   </script>
 {% endblock scripts %}

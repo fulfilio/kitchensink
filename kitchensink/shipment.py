@@ -1,15 +1,33 @@
 from itertools import chain, groupby
 import pandas as pd
+from datetime import date, datetime
 
 from flask_login import login_required
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, jsonify
 from .extensions import fulfil
 
 shipment = Blueprint('shipment', __name__, url_prefix="/shipment")
+move = Blueprint('move', __name__, url_prefix="/move")
 
 
 Shipment = fulfil.model('stock.shipment.out')
 StockMove = fulfil.model('stock.move')
+
+
+@move.route('/<int:move_id>/wait', methods=['POST'])
+@login_required
+def wait(move_id):
+    return jsonify({
+        'success': StockMove.draft([move_id])
+    })
+
+
+@move.route('/<int:move_id>/assign', methods=['POST'])
+@login_required
+def assign(move_id):
+    return jsonify({
+        'success': StockMove.assign([move_id])
+    })
 
 
 @shipment.route('/items-waiting')
@@ -33,13 +51,14 @@ def waiting():
     # Convert shipments to a dictionary
     shipments = dict(zip(map(lambda s: s['id'], shipments), shipments))
     moves = StockMove.search_read(
-        [('id', 'in', move_ids), ('state', '=', 'draft')],
+        [('id', 'in', move_ids), ('state', 'in', ('draft', 'assigned'))],
         None, None, None,
         [
             'product', 'product.code', 'product.rec_name',
             'product.template.account_category',
             'product.template.account_category.rec_name',
             'quantity', 'quantity_available', 'state',
+            'product.quantity_on_hand',
             'planned_date', 'shipment', 'children'
         ]
     )
@@ -53,8 +72,9 @@ def waiting():
         ]
 
     moves_by_product = []
+    today = date.today()
     for product, pmoves in groupby(
-            sorted(moves, key=lambda m: (m['product'], m['planned_date'])),
+            sorted(moves, key=lambda m: (m['product'], m['planned_date'] or today)),
             key=lambda m: m['product']):
         moves_by_product.append((product, list(pmoves)))
 
@@ -79,16 +99,40 @@ def plan_by_product():
         'internal_quantity',
         'planned_date',
     ]
-    outgoing_moves = StockMove.search_read([
-        ('to_location.type', '=', 'customer'),
-        ('state', 'in', ('draft', 'assigned')),
-    ], None, None, [('planned_date', 'ASC')], fields)
+    shipments = Shipment.search_read(
+        [('state', 'in', ('assigned', 'waiting'))],
+        None, None, None,
+        ['inventory_moves']
+    )
+    move_ids = list(
+        chain(*map(lambda s: s['inventory_moves'], shipments))
+    )
+    outgoing_moves = StockMove.search_read(
+        [('id', 'in', move_ids), ('state', 'in', ('draft', 'assigned'))],
+        None, None, None,
+        [
+            'product', 'product.code',
+            'product.template.name',
+            'planned_date',
+            'internal_quantity',
+        ]
+    )
+    today = date.today()
+    for move in outgoing_moves:
+        move['Planned Date'] = datetime.strftime(
+            move['planned_date'] or today,
+            '%m/%d'
+        )
+        move['Product'] = move['product.template.name']
+        move['SKU'] = move['product.code']
+        move['Quantity'] = move['internal_quantity']
+
     df = pd.DataFrame(outgoing_moves)
     pivot_table = pd.pivot_table(
         df,
-        index=["product.template.name", "product.code"],
-        columns=["planned_date"],
-        values=["internal_quantity"],
+        index=["Product", "SKU"],
+        columns=["Planned Date"],
+        values=["Quantity"],
         fill_value="",
         aggfunc="sum"
     )

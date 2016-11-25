@@ -1,5 +1,17 @@
 {% extends 'layout.html' %}
 
+{% block custom_style %}
+  {{ super() }}
+  <style>
+  	td {
+  		text-align: center;
+  	}
+    td.highlight {
+      background-color: #ADFF2F;
+    }
+  </style>
+{% endblock custom_style %}
+
 {% block content %}
 <div class="col-xs-12">
   <h1 class="page-header">Shipping plan by Products</h1>
@@ -7,6 +19,13 @@
 <div class="col-xs-12">
   {{ table_html|safe }}
 </div>
+<script>
+$('td').each(function() {
+    if ($(this).text().length > 0) {
+    	$(this).addClass('highlight');
+    }
+});
+</script>
 {% endblock content %}
 
 {% block sidebar %}

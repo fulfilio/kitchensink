@@ -21,8 +21,9 @@ def create_app(config=Config):
         SSLify(app)
 
     # register blueprints
-    from kitchensink.shipment import shipment
+    from kitchensink.shipment import shipment, move
     app.register_blueprint(shipment)
+    app.register_blueprint(move)
     from kitchensink.user import blueprint, public
     app.register_blueprint(blueprint)
     app.register_blueprint(public)
