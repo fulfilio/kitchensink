@@ -91,38 +91,27 @@ def plan_by_product():
     """
     Show a plan by product
     """
-    fields = [
-        'product',
-        'product.code',
-        'product.variant_name',
-        'product.template.name',
-        'internal_quantity',
-        'planned_date',
-    ]
-    shipments = Shipment.search_read(
+    shipments = list(Shipment.search_read_all(
         [('state', 'in', ('assigned', 'waiting'))],
-        None, None, None,
+        None,
         ['inventory_moves']
-    )
+    ))
     move_ids = list(
         chain(*map(lambda s: s['inventory_moves'], shipments))
     )
-    outgoing_moves = StockMove.search_read(
+    outgoing_moves = list(StockMove.search_read_all(
         [('id', 'in', move_ids), ('state', 'in', ('draft', 'assigned'))],
-        None, None, None,
-        [
+        None,
+        fields=[
             'product', 'product.code',
             'product.template.name',
             'planned_date',
             'internal_quantity',
         ]
-    )
+    ))
     today = date.today()
     for move in outgoing_moves:
-        move['Planned Date'] = datetime.strftime(
-            move['planned_date'] or today,
-            '%m/%d'
-        )
+        move['Planned Date'] = move['planned_date'] or today
         move['Product'] = move['product.template.name']
         move['SKU'] = move['product.code']
         move['Quantity'] = move['internal_quantity']
@@ -138,6 +127,6 @@ def plan_by_product():
     )
     return render_template(
         'plan-by-product.html',
-        table_html=pivot_table.to_html()
+        pivot_table=pivot_table
 
     )

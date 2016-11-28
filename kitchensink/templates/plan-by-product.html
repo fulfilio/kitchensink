@@ -3,9 +3,9 @@
 {% block custom_style %}
   {{ super() }}
   <style>
-  	td {
-  		text-align: center;
-  	}
+    td {
+      text-align: center;
+    }
     td.highlight {
       background-color: #ADFF2F;
     }
@@ -17,15 +17,33 @@
   <h1 class="page-header">Shipping plan by Products</h1>
 </div>
 <div class="col-xs-12">
-  {{ table_html|safe }}
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>SKU</th>
+        {% for column in pivot_table.columns %}
+        <th>{{ column[-1]|dateformat("EEE, MMM d") }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    {% for index, row in pivot_table.iterrows() %}
+    <tr>
+      <td>{{ index[0] }}</td>
+      <td>{{ index[1] }}</td>
+      {% for key, quantity in row.iteritems() %}
+      <td {% if quantity %}class="highlight"{% endif %}>
+        {% if quantity %}
+        <a href="{{ 'stock.shipment.out'|client_url(domain=[('planned_date', '=', key[-1]), ('state', 'in', ('waiting', 'assigned', 'packed')), ('moves.product.code', '=', index[1])]) }}" target="blank">
+        {{ quantity|int }}
+        </a>
+        {% endif %}
+      </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </table>
 </div>
-<script>
-$('td').each(function() {
-    if ($(this).text().length > 0) {
-    	$(this).addClass('highlight');
-    }
-});
-</script>
 {% endblock content %}
 
 {% block sidebar %}

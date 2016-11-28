@@ -1,7 +1,6 @@
 from flask import Flask
 from .extensions import fulfil, babel, toolbar, login_manager
 from .settings import Config
-from .utils import client_url
 from flask_sslify import SSLify
 
 
@@ -27,8 +26,5 @@ def create_app(config=Config):
     from kitchensink.user import blueprint, public
     app.register_blueprint(blueprint)
     app.register_blueprint(public)
-
-    # Register filters
-    app.jinja_env.filters['client_url'] = client_url
 
     return app
