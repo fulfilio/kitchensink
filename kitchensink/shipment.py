@@ -127,6 +127,6 @@ def plan_by_product():
     )
     return render_template(
         'plan-by-product.html',
-        pivot_table=pivot_table
-
+        pivot_table=pivot_table,
+        current_year=datetime.utcnow().year,
     )

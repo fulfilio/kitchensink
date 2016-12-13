@@ -23,7 +23,18 @@
         <th>Product</th>
         <th>SKU</th>
         {% for column in pivot_table.columns %}
-        <th>{{ column[-1]|dateformat("EEE, MMM d") }}</th>
+        {% if column[-1].year == current_year %}
+        <th>{{ column[-1]|dateformat("MMM d") }}</th>
+        {% else %}
+        <th>{{ column[-1]|dateformat("MMM d, yyyy") }}</th>
+        {% endif %}
+        {% endfor %}
+      </tr>
+      <tr>
+        <th></th>
+        <th></th>
+        {% for column in pivot_table.columns %}
+        <td>{{ column[-1]|dateformat("EEE") }}</td>
         {% endfor %}
       </tr>
     </thead>
