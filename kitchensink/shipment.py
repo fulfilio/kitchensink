@@ -85,6 +85,55 @@ def waiting():
     )
 
 
+@shipment.route('/waiting/region')
+@shipment.route('/waiting/region/<country>')
+@login_required
+def waiting_by_region(country=None):
+    """
+    Waiting shipments by region
+    """
+    domain = [('state', 'in', ('assigned', 'waiting'))]
+    if country:
+        domain.append(
+            ('delivery_address.country.code', '=', country)
+        )
+
+    shipments = Shipment.search_read_all(
+        domain,
+        [('delivery_address.subdivision.code', 'ASC')],
+        [
+            'inventory_moves', 'number',
+            'customer.name', 'customer.categories', 'sale_date',
+            'delivery_address.country.code',
+            'delivery_address.subdivision.code',
+        ]
+    )
+
+    if country:
+        key = lambda shipment: shipment['delivery_address.subdivision.code']
+    else:
+        key = lambda shipment: shipment['delivery_address.country.code']
+
+    grouped_shipments = []
+    google_array = [
+        ['Region', 'Shipments'],
+    ]
+    for group, items in groupby(sorted(shipments, key=key), key=key):
+        items = list(items)
+        grouped_shipments.append((group, items))
+        if group is not None:
+            google_array.append(
+                (group, len(items))
+            )
+
+    return render_template(
+        'waiting-shipments-region.html',
+        shipments=grouped_shipments,
+        google_array=google_array,
+        country=country,
+    )
+
+
 @shipment.route('/plan-by-product')
 @login_required
 def plan_by_product():

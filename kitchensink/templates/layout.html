@@ -51,6 +51,9 @@
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Shipping <span class="caret"></span></a>
               <ul class="dropdown-menu">
                 <li><a href="{{ url_for('shipment.waiting') }}">Items Waiting</a></li>
+                <li><a href="{{ url_for('shipment.waiting_by_region') }}">
+                  Waiting by region
+                </a></li>
                 <li><a href="{{ url_for('shipment.plan_by_product') }}">Plan by Product</a></li>
                 <li role="separator" class="divider"></li>
               </ul>

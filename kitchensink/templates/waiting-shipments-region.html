@@ -1,0 +1,109 @@
+{% extends 'layout.html' %}
+
+{% block extra_head %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+{% endblock extra_head %}
+
+{% block custom_style %}
+  {{ super() }}
+  <style>
+    tr.bold {
+      font-weight: bold;
+    }
+  </style>
+{% endblock custom_style %}
+
+{% block content %}
+<div class="col-xs-12">
+  <h1 class="page-header">Waiting Shipments by region</h1>
+</div>
+
+<div class="col-xs-12">
+  <div id="regions_div" style="width: 900px; height: 500px;"></div>
+</div>
+
+<div class="col-xs-12">
+  <div class="">
+      <table class="table">
+        <tbody>
+          {% for group in shipments %}
+          <tr>
+            <td>
+              {{ group[0] }}
+            </td>
+            <td>{{ group[1]|list|length }}</td>
+            <td>
+              {% if country %}
+              <a href="{{ 'stock.shipment.out'|client_url(domain=[('delivery_address.subdivision.code', '=', group[0]), ('state', 'in', ('assigned', 'waiting'))]) }}" target="_blank">
+                View Shipments
+              </a>
+              {% else %}
+              <a href="{{ 'stock.shipment.out'|client_url(domain=[('delivery_address.country.code', '=', group[0]), ('state', 'in', ('assigned', 'waiting'))]) }}" target="_blank">
+                View Shipments
+              </a>
+              {% endif %}
+            </td>
+            {% if not country %}
+            <td>
+              <a href="{{ url_for('shipment.waiting_by_region', country=group[0]) }}">
+                View by Region
+              </a>
+            </td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+  </div>
+</div>
+{% endblock content %}
+
+
+{% block sidebar %}
+{% endblock sidebar %}
+
+{% block scripts %}
+<script>
+      google.charts.load('upcoming', {'packages':['geochart']});
+      google.charts.setOnLoadCallback(drawRegionsMap);
+
+      function drawRegionsMap() {
+
+        var data = google.visualization.arrayToDataTable({{ google_array|tojson|safe }});
+
+        {% if country %}
+        var options = {
+          displayMode: 'regions',
+          region: '{{ country }}',
+          domain: '{{ country }}',
+          resolution: 'provinces'
+        };
+        {% else %}
+        var options = {
+          displayMode: 'world'
+        };
+        {% endif %}
+
+        var chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
+        {% if not country %}
+        google.visualization.events.addListener(
+          chart,
+          'regionClick',
+          function(region) {
+            window.location = '{{ url_for('shipment.waiting_by_region', country='') }}' + region.region;
+          });
+        {% else %}
+        var defaultUrl = "{{ 'stock.shipment.out'|client_url(domain=[('delivery_address.subdivision.code', '=', 'XXXX'), ('state', 'in', ('assigned', 'waiting'))]) }}";
+        google.visualization.events.addListener(
+          chart,
+          'regionClick',
+          function(region) {
+            window.open(defaultUrl.replace('XXXX', region.region), '_blank');
+          });
+        {% endif %}
+
+        chart.draw(data, options);
+      }
+</script>
+{% endblock %}

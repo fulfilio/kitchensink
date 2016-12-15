@@ -13,6 +13,6 @@ gevent
 pandas
 
 # Async
-Flask-Celery-Helper
-Celery
+#Flask-Celery-Helper
+#Celery
 Redis
