@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import os
 from flask_script import Manager, Server, Shell
+import requests
 
 from kitchensink.app import create_app
 
