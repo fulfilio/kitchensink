@@ -3,6 +3,7 @@
 import os
 from flask_script import Manager, Server, Shell
 import requests
+import fulfil_client
 
 from kitchensink.app import create_app
 
