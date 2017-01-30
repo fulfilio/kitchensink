@@ -30,7 +30,6 @@ def reassign_all_shipments():
     process_waiting_shipments()
 
 
-
 @manager.command
 def process_waiting_shipments():
     from kitchensink.extensions import fulfil
@@ -83,6 +82,7 @@ def process_waiting_shipments():
             }]
         }
     )
+
 
 manager.add_command('server', Server())
 manager.add_command('shell', Shell())
