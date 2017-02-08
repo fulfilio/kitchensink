@@ -6,7 +6,6 @@ services:
     command: gunicorn kitchensink.app:create_app\(\) -w 3 -b 0.0.0.0:9000 -k gevent
     labels:
       - convox.port.443.protocol=https
-      - convox.cron.mejuricron=*/10 * * * ? python manage.py process_waiting_shipments
     ports:
     - 80:9000
     - 443:9000
