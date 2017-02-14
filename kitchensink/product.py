@@ -43,9 +43,10 @@ def next_available_date(product_id):
         'quantity',
         'from_location.type'
     ]
+    today = IRDate.today()
     moves = StockMove.search_read_all([
         ('product', '=', product_id),
-        ('planned_date', '>=', datetime.today().date()),
+        ('planned_date', '>=', today),
         ('state', '=', 'draft'),
     ], [('planned_date', 'ASC')], fields)
     moves_with_errors = StockMove.search_read_all([
@@ -54,7 +55,7 @@ def next_available_date(product_id):
         [
             'OR',
             ('planned_date', '=', None),
-            ('planned_date', '<', datetime.today().date()),
+            ('planned_date', '<', today),
             ('shipment', '=', None),
         ]
     ], [('planned_date', 'ASC')], fields)

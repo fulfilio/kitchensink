@@ -13,7 +13,11 @@
     </thead>
     {% for move in stock_moves %}
     <tr class="{% if move['from_location.type'] == 'supplier' %}success{% endif %}">
-      <td>{{ move['id'] }}</td>
+      <td>
+        <a href="{{ 'stockmove'|client_url(move['id']) }}" target="new">
+        {{ move['id'] }}
+        </a>
+      </td>
       <td>{{ move['from_location.type'] }}</td>
       <td class="{% if not move['planned_date'] %}warning{% endif %}">{{ move['planned_date']|dateformat }}</td>
       <td class="{% if not move['shipment'] %}warning{% endif %}">
@@ -22,7 +26,7 @@
         {{ move['shipment.rec_name'] }}
         </a>
         {% else %}
-        ??
+        Orphan?
         {% endif %}
       </td>
       <td class="text-center">{{ move['quantity']|int }}</td>
