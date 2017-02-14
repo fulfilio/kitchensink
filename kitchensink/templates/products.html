@@ -1,0 +1,43 @@
+{% extends 'layout.html' %}
+
+
+{% block content %}
+<div class="col-xs-12">
+  <h1 class="page-header">Select a product</h1>
+</div>
+
+<div class="col-xs-12">
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Quantity on hand</th>
+        <th>Quantity Available</th>
+        <th>Quantity Assigned</th>
+        <th>Quantity Inbound</th>
+        <th>Quantity Outbound</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for product in products %}
+      <tr>
+        <td class="text-center">
+          <a href="{{ url_for('product.next_available_date', product_id=product['id']) }}">
+          {{ product['rec_name'] }}
+          </a>
+        </td>
+        <td class="text-center">{{ product['quantity_on_hand']|int }}</td>
+        <td class="text-center">{{ product['quantity_available']|int }}</td>
+        <td class="text-center">{{ (product['quantity_on_hand'] - product['quantity_available'])|int }}</td>
+        <td class="text-center">{{ product['quantity_inbound']|int }}</td>
+        <td class="text-center">{{ product['quantity_outbound']|int }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+</div>
+{% endblock content %}
+
+{% block sidebar %}
+{% endblock sidebar %}

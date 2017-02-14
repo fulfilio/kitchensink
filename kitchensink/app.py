@@ -26,5 +26,7 @@ def create_app(config=Config):
     from kitchensink.user import blueprint, public
     app.register_blueprint(blueprint)
     app.register_blueprint(public)
+    from kitchensink.product import product
+    app.register_blueprint(product)
 
     return app
