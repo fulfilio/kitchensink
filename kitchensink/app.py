@@ -1,7 +1,8 @@
 from flask import Flask
-from .extensions import fulfil, babel, toolbar, login_manager
+from .extensions import babel, toolbar, login_manager
 from .settings import Config
 from flask_sslify import SSLify
+from .utils import client_url
 
 
 def create_app(config=Config):
@@ -9,7 +10,6 @@ def create_app(config=Config):
     app.config.from_object(config)
 
     # register extensions
-    fulfil.init_app(app)
     babel.init_app(app)
     toolbar.init_app(app)
     login_manager.init_app(app)
@@ -18,6 +18,8 @@ def create_app(config=Config):
     # celery.init_app(app)
     if not app.debug:
         SSLify(app)
+
+    app.jinja_env.filters['client_url'] = client_url
 
     # register blueprints
     from kitchensink.shipment import shipment, move

@@ -10,13 +10,10 @@ shipment = Blueprint('shipment', __name__, url_prefix="/shipment")
 move = Blueprint('move', __name__, url_prefix="/move")
 
 
-Shipment = fulfil.model('stock.shipment.out')
-StockMove = fulfil.model('stock.move')
-
-
 @move.route('/<int:move_id>/wait', methods=['POST'])
 @login_required
 def wait(move_id):
+    StockMove = fulfil.model('stock.move')
     return jsonify({
         'success': StockMove.draft([move_id])
     })
@@ -25,6 +22,7 @@ def wait(move_id):
 @move.route('/<int:move_id>/assign', methods=['POST'])
 @login_required
 def assign(move_id):
+    StockMove = fulfil.model('stock.move')
     return jsonify({
         'success': StockMove.assign([move_id])
     })
@@ -36,6 +34,8 @@ def waiting():
     """
     Waiting shipments
     """
+    Shipment = fulfil.model('stock.shipment.out')
+    StockMove = fulfil.model('stock.move')
     shipments = Shipment.search_read(
         [('state', 'in', ('assigned', 'waiting'))],
         None, None, None,
@@ -92,6 +92,7 @@ def waiting_by_region(country=None):
     """
     Waiting shipments by region
     """
+    Shipment = fulfil.model('stock.shipment.out')
     domain = [('state', 'in', ('assigned', 'waiting'))]
     if country:
         domain.append(
@@ -140,6 +141,8 @@ def plan_by_product():
     """
     Show a plan by product
     """
+    Shipment = fulfil.model('stock.shipment.out')
+    StockMove = fulfil.model('stock.move')
     shipments = list(Shipment.search_read_all(
         [('state', 'in', ('assigned', 'waiting'))],
         None,

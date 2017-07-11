@@ -1,20 +1,15 @@
-from datetime import datetime
-
 from flask_login import login_required
-from flask import Blueprint, render_template, jsonify
+from flask import Blueprint, render_template
 from .extensions import fulfil
 
 
 product = Blueprint('product', __name__, url_prefix="/product")
 
-StockMove = fulfil.model('stock.move')
-Product = fulfil.model('product.product')
-IRDate = fulfil.model('ir.date')
-
 
 @product.route('/', methods=['GET'])
 @login_required
 def products():
+    Product = fulfil.model('product.product')
     products = Product.search_read_all([
         ('purchasable', '=', True),
         ('salable', '=', True),
@@ -29,6 +24,9 @@ def products():
 @login_required
 def next_available_date(product_id):
     "Display the next available date and why it is that way"
+    StockMove = fulfil.model('stock.move')
+    Product = fulfil.model('product.product')
+    IRDate = fulfil.model('ir.date')
     product, = Product.read(
         [product_id],
         ['rec_name', 'quantity_on_hand', 'quantity_available', 'quantity_inbound', 'quantity_outbound']
