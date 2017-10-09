@@ -1,0 +1,79 @@
+{% extends 'layout.html' %}
+
+{% macro render_moves(stock_moves) %}
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Internal ID</th>
+        <th>From Location</th>
+        <th>Date</th>
+        <th>Shipment</th>
+        <th>Quantity</th>
+      </tr>
+    </thead>
+    {% for move in stock_moves %}
+    <tr class="{% if move['from_location.type'] == 'supplier' %}success{% endif %}">
+      <td>
+        <a href="{{ 'stockmove'|client_url(move['id']) }}" target="new">
+        {{ move['id'] }}
+        </a>
+      </td>
+      <td>{{ move['from_location.type'] }}</td>
+      <td class="{% if not move['planned_date'] %}warning{% endif %}">{{ move['planned_date']|dateformat }}</td>
+      <td class="{% if not move['shipment'] %}warning{% endif %}">
+        {% if move['shipment'] %}
+        <a href="{{ move['shipment'].split(',')[0]|client_url(move['shipment'].split(',')[1]|int) }}" target="new">
+        {{ move['shipment.rec_name'] }}
+        </a>
+        {% else %}
+        Orphan?
+        {% endif %}
+      </td>
+      <td class="text-center">{{ move['quantity']|int }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+{% endmacro %}
+
+
+{% block content %}
+<div class="col-xs-12">
+  <h1 class="page-header">{{ product['rec_name'] }}</h1>
+</div>
+
+<div class="col-xs-12">
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Next available date</th>
+        <th>Quantity on hand</th>
+        <th>Quantity Available</th>
+        <th>Quantity Assigned</th>
+        <th>Quantity Inbound</th>
+        <th>Quantity Outbound</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="text-center"><b>{{ next_date|dateformat }}</b></td>
+        <td class="text-center">{{ product['quantity_on_hand']|int }}</td>
+        <td class="text-center">{{ product['quantity_available']|int }}</td>
+        <td class="text-center">{{ (product['quantity_on_hand'] - product['quantity_available'])|int }}</td>
+        <td class="text-center">{{ product['quantity_inbound']|int }}</td>
+        <td class="text-center">{{ product['quantity_outbound']|int }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  {% if moves_with_errors %}
+  <h4 class="text-danger">Events with Potential Issues</h4>
+  {{ render_moves(moves_with_errors) }}
+  {% endif %}
+
+  <h4>Inventory Events</h4>
+  {{ render_moves(moves) }}
+</div>
+{% endblock content %}
+
+{% block sidebar %}
+{% endblock sidebar %}

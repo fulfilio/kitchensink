@@ -1,0 +1,61 @@
+{% extends 'layout.html' %}
+
+{% block custom_style %}
+  {{ super() }}
+  <style>
+    td {
+      text-align: center;
+    }
+    td.highlight {
+      background-color: #ADFF2F;
+    }
+  </style>
+{% endblock custom_style %}
+
+{% block content %}
+<div class="col-xs-12">
+  <h1 class="page-header">Shipping plan by Products</h1>
+</div>
+<div class="col-xs-12">
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>SKU</th>
+        {% for column in pivot_table.columns %}
+        {% if column[-1].year == current_year %}
+        <th>{{ column[-1]|dateformat("MMM d") }}</th>
+        {% else %}
+        <th>{{ column[-1]|dateformat("MMM d, yyyy") }}</th>
+        {% endif %}
+        {% endfor %}
+      </tr>
+      <tr>
+        <th></th>
+        <th></th>
+        {% for column in pivot_table.columns %}
+        <td>{{ column[-1]|dateformat("EEE") }}</td>
+        {% endfor %}
+      </tr>
+    </thead>
+    {% for index, row in pivot_table.iterrows() %}
+    <tr>
+      <td>{{ index[0] }}</td>
+      <td>{{ index[1] }}</td>
+      {% for key, quantity in row.iteritems() %}
+      <td {% if quantity %}class="highlight"{% endif %}>
+        {% if quantity %}
+        <a href="{{ 'stock.shipment.out'|client_url(domain=[('planned_date', '=', key[-1]), ('state', 'in', ('waiting', 'assigned', 'packed')), ('moves.product.code', '=', index[1])]) }}" target="blank">
+        {{ quantity|int }}
+        </a>
+        {% endif %}
+      </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock content %}
+
+{% block sidebar %}
+{% endblock sidebar %}

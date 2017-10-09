@@ -1,0 +1,19 @@
+flask
+fulfil_client>=0.8.1
+flask-fulfil
+flask-script
+flask-babel
+Flask-WTF
+Flask-SSLify
+Flask-Login
+unicodecsv
+flask-debugtoolbar
+simplejson
+gunicorn
+gevent
+pandas
+
+# Async
+#Flask-Celery-Helper
+#Celery
+Redis

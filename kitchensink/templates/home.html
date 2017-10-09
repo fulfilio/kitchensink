@@ -1,0 +1,10 @@
+{% extends 'layout.html' %}
+{% from 'utils.html' import render_field %}
+
+{% block container %}
+<div class="row">
+  <div class="col-sm-12">
+  	<img src="{{ url_for('static', filename='kitchensink.jpg') }}"/>
+  </div>
+</div>
+{% endblock container %}

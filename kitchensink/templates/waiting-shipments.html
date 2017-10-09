@@ -1,0 +1,199 @@
+{% extends 'layout.html' %}
+
+{% block custom_style %}
+  {{ super() }}
+  <style>
+    tr.bold {
+      font-weight: bold;
+    }
+  </style>
+{% endblock custom_style %}
+
+{% block content %}
+<div class="col-xs-12">
+  <h1 class="page-header">Items Waiting Shipment</h1>
+</div>
+<div class="col-xs-12">
+  <div class="panel panel-default hidden-print">
+    <div class="panel-heading">
+      <span>
+        <h3 class="panel-title">Categories ({{ categories|length }})</h3>
+        <button class="btn btn-link pull-right" id="clear-categories">Clear</button>
+      </span>
+    </div>
+    <div class="panel-body">
+      {% for batch in categories|batch(15) %}
+        <div class="col-xs-3">
+        {% for category_id, category_name in batch %}
+          <div class="checkbox">
+            <label>
+              <input type="radio" id="show-category-{{ category_id }}" name="category" value="{{ category_id }}" data-category-id="{{ category_id }}"/> {{ category_name }}
+            </label>
+          </div>
+        {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+    <div class="panel-footer">
+      <div class="row">
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" id="show-only-assignable" name="show-only-assignable" value="show-only-assignable" /> Show only assignable
+          </label>
+        </div> 
+      </div>
+    </div>
+  </div>
+</div>
+<div class="col-xs-12">
+  <div class="">
+    {% for product, moves in moves_by_product %}
+        <table class="product-table table" data-category="{{ moves[0]['product.template.account_category'] }}">
+          <tbody>
+            <tr class="info product-bar">
+              <td class="col-xs-3">
+                <b>Product:</b> {{ moves[0]['product.rec_name'] }}
+              </td>
+              <td class="col-xs-2">
+              </td>
+              <td class="col-xs-2">
+                <b>Oldest Date:</b> {{ moves[0]['planned_date']|dateformat }}
+              </td>
+              <td class="col-xs-5">
+                <div class="col-xs-4">
+                  <b>Available:</b> {{ moves[0]['quantity_available']|int }}
+                  <br/>
+                  <b>On Hand:</b> {{ moves[0]['product.quantity_on_hand']|int }}
+                </div>
+                <div class="col-xs-4">
+                  <b>Category:</b><br/>
+                  {{ moves[0]['product.template.account_category.rec_name'] }}
+                </div>
+                <div class="col-xs-4">
+                  <b>Waiting:</b> {{ moves|sum(attribute='quantity')|int }}
+                </div>
+              </td>
+            </tr>
+            <tr class="shipments-row">
+              <td colspan="5">
+                <div class="row">
+                  <div class="col-xs-10 col-xs-offset-1">
+                    <table class="move-table table table-condensed">
+                      <thead>
+                        <th>Shipment</th>
+                        <th>Customer</th>
+                        <th>Sale Date</th>
+                        <th>Planned Date</th>
+                        <th class="text-right">Quantity</th>
+                        <th class="text-right">Inventory Status</th>
+                      </thead>
+                      <tbody>
+                        {% for move in moves %}
+                          <tr 
+                            {% if move['quantity_available'] >= move['quantity'] %}class="success" data-assignable="1"{% else %}data-assignable="0"{% endif %}
+                            data-quantity="move['quantity']"
+                            >
+                            <td>
+                              <a href="{{ 'stock.shipment.out'|client_url(move['shipment']['id']) }}" target="new">
+                                {{ move['shipment']['number'] or '-' }}
+                              </a>
+                              {% if move['children'] %}
+                                <br/>
+                                <span class="label label-warning">Built on the fly</span>
+                              {% endif %}
+                            </td>
+                            <td>{{ move['shipment']['customer.name'] }}</td>
+                            <td>{{ move['shipment']['sale_date']|dateformat }}</td>
+                            <td>{{ move['planned_date']|dateformat }}</td>
+                            <td class="text-right">{{ move['quantity']|int }}</td>
+                            <td class="text-capitalize text-right">
+                            {% if move['state'] == 'draft' %}
+                            Waiting
+                            <button type="button" class="btn btn-success btn-assign btn-small" data-url="{{ url_for('move.assign', move_id=move['id']) }}">Assign</button>
+                            {% elif move['state'] == 'assigned' %}
+                            Assigned
+                            <button type="button" class="btn btn-warning btn-wait btn-small" data-url="{{ url_for('move.wait', move_id=move['id']) }}">Un-Assign</button>
+                            {% endif %}
+                            </td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      {% endfor %}
+  </div>
+</div>
+{% endblock content %}
+
+
+{% block sidebar %}
+{% endblock sidebar %}
+
+
+{% block scripts %}
+  <script>
+    $(document).ready(function() {
+      function renderAgain() {
+
+        $("table.product-table,tr").removeClass('hidden');
+
+        if ($('input#show-only-assignable')[0].checked) {
+          $("tr[data-assignable='0']").addClass('hidden');
+        };
+
+        var category = $('input[name=category]:checked').val();
+        if (category) {
+          $("table.product-table[data-category!=" + category + "]").addClass('hidden');
+        };
+
+        // Hide the tables with all hidden move rows
+        $("table.product-table table").each(function() {
+          if ($(this).find('tr').length == ($(this).find('tr.hidden').length + 1)) {
+            $(this).parents('table.product-table').addClass('hidden');
+          }
+        })
+      };
+
+      $("button#clear-categories").click(function() {
+        $('input[name=category]:checked').prop('checked', false);
+        renderAgain();
+      });
+
+      // On every change of input re render
+      $('input').change(renderAgain);
+
+      $('.btn-assign').click(function() {
+        var button = $(this);
+        button.attr('disabled', true);
+        button.text("Assigning...");
+        $.post($(this).data('url'))
+        .success(function(data) {
+          button.hide();
+          button.parent('td').html('Assigned');
+        })
+        .error(function(data) {
+          alert('Could not assign inventory!');
+        });
+      });
+      $('.btn-wait').click(function() {
+        var button = $(this);
+        button.attr('disabled', true);
+        button.text("un-assigning...");
+        $.post($(this).data('url'))
+        .success(function(data) {
+          button.hide();
+          button.parent('td').html('Waiting');
+        })
+        .error(function(data) {
+          alert('Could not un-assign inventory!');
+        });
+      });
+    })
+  </script>
+{% endblock scripts %}
+
