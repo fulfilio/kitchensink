@@ -12,6 +12,7 @@ simplejson
 gunicorn
 gevent
 pandas
+raven[flask]
 
 # Async
 #Flask-Celery-Helper

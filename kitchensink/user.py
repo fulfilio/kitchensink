@@ -4,12 +4,17 @@ from fulfil_client.model import StringType, BooleanType, IntType
 from flask_login import UserMixin, login_user, logout_user
 from oauthlib.oauth2 import InvalidGrantError
 from .extensions import fulfil, login_manager
-from .settings import Config
 from .utils import get_oauth_session
 
 blueprint = flask.Blueprint('user', __name__, url_prefix="/user")
 public = flask.Blueprint('public', __name__, url_prefix="")
 Model = model.model_base(fulfil)
+
+
+def error_500(e):
+    """500 Error Page
+    """
+    return flask.render_template("500.html"), 500
 
 
 @public.route('/')

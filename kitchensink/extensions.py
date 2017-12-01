@@ -7,6 +7,8 @@ from flask_babel import Babel
 from flask_login import LoginManager
 from flask_debugtoolbar import DebugToolbarExtension
 from werkzeug.local import LocalProxy
+from raven.contrib.flask import Sentry
+
 from .settings import Config
 # from flask.ext.celery import Celery
 
@@ -20,6 +22,9 @@ babel = Babel()
 toolbar = DebugToolbarExtension()
 login_manager = LoginManager()
 login_manager.login_view = "user.login"
+
+# sentry
+sentry = Sentry()
 
 # login page is now converted to redirect, this message will only be visible
 # when user comes back after login.

@@ -1,5 +1,5 @@
 from flask import Flask
-from .extensions import babel, toolbar, login_manager
+from .extensions import babel, toolbar, login_manager, sentry
 from .settings import Config
 from flask_sslify import SSLify
 from .utils import client_url
@@ -13,6 +13,7 @@ def create_app(config=Config):
     babel.init_app(app)
     toolbar.init_app(app)
     login_manager.init_app(app)
+    sentry.init_app(app)
 
     # Initialize the celery app
     # celery.init_app(app)
@@ -25,7 +26,8 @@ def create_app(config=Config):
     from kitchensink.shipment import shipment, move
     app.register_blueprint(shipment)
     app.register_blueprint(move)
-    from kitchensink.user import blueprint, public
+    from kitchensink.user import blueprint, public, error_500
+    app.register_error_handler(500, error_500)
     app.register_blueprint(blueprint)
     app.register_blueprint(public)
     from kitchensink.product import product
