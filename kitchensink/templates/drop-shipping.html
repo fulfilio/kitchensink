@@ -1,0 +1,131 @@
+{% extends 'layout.html' %}
+
+{% block custom_style %}
+  {{ super() }}
+  <style>
+    tr.bold {
+      font-weight: bold;
+    }
+  </style>
+{% endblock custom_style %}
+
+
+{% macro render_field(field, label_visible=true) -%}
+     <div class="form-group {% if field.errors %}has-error{% endif %} {{ kwargs.pop('class_', '') }}">
+        {% if field.type != 'HiddenField' and label_visible %}
+            <label for="{{ field.id }}" class="control-label">{{ field.label }}</label>
+        {% endif %}
+        {{ field(class_='form-control', **kwargs) }}
+        {% if field.errors %}
+            {% for e in field.errors %}
+                <p class="help-block">{{ e }}</p>
+            {% endfor %}
+        {% endif %}
+    </div>
+{%- endmacro %}
+
+
+{% block sidebar %}
+{% endblock sidebar %}
+
+
+{% block content %}
+<div class="col-xs-12">
+  <h1 class="page-header">Drop Shipments</h1>
+	  <form method="POST" enctype="multipart/form-data" action="{{ url_for('dropshipping.shipments') }}">
+	    {{ form.csrf_token }}
+	    {{ render_field(form.quantum_file) }}
+	    <input type="submit" value="Go" class="btn btn-success">
+	  </form></div>
+<div class="col-xs-12">
+  <div class="">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>PO #</th>
+          <th>Sales Order #</th>
+          <th>Customer</th>
+          <th>Address</th>
+          <th>Tracking Number</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for shipment in shipments %}
+        <tr>
+          <td>
+            <a href="{{ 'stock.shipment.drop'|client_url(shipment['id'].split(',')[-1]|int) }}" target="new">
+            {{ shipment['number'] }}
+          </td>
+          <td>
+            <a href="{{ 'purchase.purchase'|client_url(shipment['supplier_moves'][0]['origin.purchase']) }}" target="new">
+              {{ shipment['supplier_moves'][0]['origin.purchase.number'] }}
+            </a><br/>
+            {{ shipment['supplier_moves'][0]['origin.purchase.purchase_date']|dateformat }}
+          </td>
+          <td>
+            {% if shipment['customer_moves'] %}
+            <a href="{{ 'sale.sale'|client_url(shipment['customer_moves'][0]['origin.sale']) }}" target="new">
+              {{ shipment['customer_moves'][0]['origin.sale.reference'] }}
+            </a><br/>
+            {{ shipment['customer_moves'][0]['origin.sale.sale_date']|dateformat }}
+            {% endif %}
+          </td>
+          <td>
+            <b>{{ shipment['supplier.name'] }}</b> >
+            {{ shipment['customer.name'] }}
+          </td>
+          <td>
+            {% for line in shipment['delivery_address'].split('\r\n') %}
+            {% if loop.first %}<b>{{ line }}</b>{% else %}{{ line }}{% endif %}<br/>
+            {% endfor %}
+          </td>
+          <td>
+            {{ shipment['tracking_number'] }}<br/>
+            {% if shipment['tracking_number'] %}
+            {% set qdata = quantum_data[shipment['tracking_number']] %}
+            <b>{{ qdata['Shipper Name'] }}</b> > <b>{{ qdata['Ship To Name'] }}</b><br/>
+            {{ qdata['Ship To City'] }} {{ qdata['Ship To State/Province'] }} {{ qdata['Ship To Postal Code'] }}
+            {% endif %}
+          </td>
+          <td>
+            {% if shipment['tracking_number'] %}
+            <a class="btn btn-success btn-match" 
+              data-shipment="{{ shipment['id'].split(',')[-1] }}"
+              data-carrier-id="1"
+              data-tracking-number="{{ shipment['tracking_number'] }}">
+              Match
+            </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock content %}
+
+
+{% block scripts %}
+  <script>
+    $(document).ready(function() {
+      $('a.btn-match').click(function(event) {
+        var element = $(this);
+        element.hide();
+        $.post(
+          "{{ url_for('dropshipping.update_tracking') }}",
+          {
+            'carrier': element.data('carrier-id'),
+            'shipment': element.data('shipment'),
+            'tracking_number': element.data('tracking-number')
+          },
+          function(data) {
+            element.html("<span>Updated!</span>")
+          }
+        )
+      })
+    });
+</script>
+{% endblock %}

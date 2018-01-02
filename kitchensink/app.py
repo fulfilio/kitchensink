@@ -32,5 +32,7 @@ def create_app(config=Config):
     app.register_blueprint(public)
     from kitchensink.product import product
     app.register_blueprint(product)
+    from kitchensink.dropshipping import dropshipping
+    app.register_blueprint(dropshipping)
 
     return app
