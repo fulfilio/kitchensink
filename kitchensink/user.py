@@ -87,6 +87,7 @@ def authorized():
         name=token['associated_user']['name'],
         active=True
     )
+    flask.session['FULFIL_ACCESS_TOKEN'] = token['access_token']
     login_user(user)
     next = flask.request.args.get('next')
 
