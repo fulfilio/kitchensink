@@ -34,19 +34,19 @@ login_manager.login_message = None
 def get_fulfil():
     subdomain = Config.FULFIL_SUBDOMAIN
 
+    access_token = Config.FULFIL_OFFLINE_ACCESS_TOKEN
+
     if 'FULFIL_ACCESS_TOKEN' in flask.session:
-        return Client(
-            subdomain,
-            auth=BearerAuth(flask.session['FULFIL_ACCESS_TOKEN'])
-        )
-    # Check if an offline token exists
-    offline_access_token = Config.FULFIL_OFFLINE_ACCESS_TOKEN
-    if offline_access_token is None:
-        abort(403)
+        # Use current login token
+        access_token = flask.session['FULFIL_ACCESS_TOKEN']
+
+    if access_token is None:
+        flask.abort(403)
+
     try:
         return Client(
             subdomain,
-            auth=BearerAuth(offline_access_token)
+            auth=BearerAuth(access_token)
         )
     except ClientError, e:
         if e.code == 401:

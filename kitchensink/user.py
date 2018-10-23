@@ -96,5 +96,6 @@ def authorized():
 
 @blueprint.route("/logout")
 def logout():
+    flask.session.pop('FULFIL_ACCESS_TOKEN')
     logout_user()
     return flask.redirect(flask.url_for('public.home'))
