@@ -14,7 +14,9 @@ def products():
         ('purchasable', '=', True),
         ('salable', '=', True),
     ], [('variant_name', 'ASC')],
-    ['rec_name', 'quantity_on_hand', 'quantity_available', 'quantity_inbound', 'quantity_outbound'])
+        ['rec_name', 'quantity_on_hand', 'quantity_available',
+            'quantity_inbound', 'quantity_outbound']
+    )
     return render_template(
         'products.html', products=list(products)
     )
@@ -29,7 +31,8 @@ def next_available_date(product_id):
     IRDate = fulfil.model('ir.date')
     product, = Product.read(
         [product_id],
-        ['rec_name', 'quantity_on_hand', 'quantity_available', 'quantity_inbound', 'quantity_outbound']
+        ['rec_name', 'quantity_on_hand', 'quantity_available',
+            'quantity_inbound', 'quantity_outbound']
     )
     next_date = Product.get_next_available_date(product_id)
     fields = [
@@ -62,5 +65,5 @@ def next_available_date(product_id):
         next_date=next_date,
         moves=list(moves),
         moves_with_errors=list(moves_with_errors),
-        product=product
+        product=product,
     )

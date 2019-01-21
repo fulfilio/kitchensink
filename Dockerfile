@@ -1,5 +1,4 @@
-FROM python:2.7
-
+FROM python:3.6-stretch
 # copy the rest of the app
 COPY . /app
 

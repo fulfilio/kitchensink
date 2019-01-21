@@ -61,7 +61,7 @@ def shipments():
     return render_template(
         'drop-shipping.html',
         shipments=sorted(
-            shipments.values(),
+            list(shipments.values()),
             key=lambda o: o.get('order_date', date.today())
         ),
         quantum_data=quantum_data,
@@ -72,10 +72,13 @@ def shipments():
 def match_quantum_data(shipments, quantum_data):
     for shipment in shipments.values():
         for row in quantum_data.values():
-            if (
-                (shipment['delivery_state'] is not None) and
-                (shipment['delivery_state'][-2:] == row['Ship To State/Province']) and
-                    (row['Ship To Postal Code'][-4:] == shipment['delivery_zip'][-4:])):
+            if shipment['delivery_state'] is not None and (
+                shipment['delivery_state'][-2:] ==
+                row['Ship To State/Province']
+            ) and (
+                row['Ship To Postal Code'][-4:] ==
+                shipment['delivery_zip'][-4:]
+            ):
                 shipment['tracking_number'] = row['Tracking Number']
                 break
 
@@ -162,5 +165,6 @@ def get_open_drop_shipments():
         ].split('\r\n'))
 
     for shipment in shipments.values():
-        shipment['keywords'] = ' '.join(filter(None, set(shipment['keywords'])))
+        shipment['keywords'] = ' '.join(
+            [_f for _f in set(shipment['keywords']) if _f])
     return shipments

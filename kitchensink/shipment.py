@@ -45,11 +45,11 @@ def waiting():
         ]
     )
     move_ids = list(
-        chain(*map(lambda s: s['inventory_moves'], shipments))
+        chain(*[s['inventory_moves'] for s in shipments])
     )
 
     # Convert shipments to a dictionary
-    shipments = dict(zip(map(lambda s: s['id'], shipments), shipments))
+    shipments = dict(list(zip([s['id'] for s in shipments], shipments)))
     moves = StockMove.search_read(
         [('id', 'in', move_ids), ('state', 'in', ('draft', 'assigned'))],
         None, None, None,
@@ -74,14 +74,15 @@ def waiting():
     moves_by_product = []
     today = date.today()
     for product, pmoves in groupby(
-            sorted(moves, key=lambda m: (m['product'], m['planned_date'] or today)),
+            sorted(moves, key=lambda m: (
+                m['product'], m['planned_date'] or today)),
             key=lambda m: m['product']):
         moves_by_product.append((product, list(pmoves)))
 
     return render_template(
         'waiting-shipments.html',
         moves_by_product=moves_by_product,
-        categories=sorted(categories.items(), key=lambda item: item[1]),
+        categories=sorted(list(categories.items()), key=lambda item: item[1]),
     )
 
 
@@ -111,9 +112,9 @@ def waiting_by_region(country=None):
     )
 
     if country:
-        key = lambda shipment: shipment['delivery_address.subdivision.code']
+        key = lambda shipment: shipment['delivery_address.subdivision.code'] # noqa
     else:
-        key = lambda shipment: shipment['delivery_address.country.code']
+        key = lambda shipment: shipment['delivery_address.country.code'] # noqa
 
     grouped_shipments = []
     google_array = [
@@ -149,7 +150,7 @@ def plan_by_product():
         ['inventory_moves']
     ))
     move_ids = list(
-        chain(*map(lambda s: s['inventory_moves'], shipments))
+        chain(*[s['inventory_moves'] for s in shipments])
     )
     outgoing_moves = list(StockMove.search_read_all(
         [('id', 'in', move_ids), ('state', 'in', ('draft', 'assigned'))],

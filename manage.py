@@ -14,7 +14,7 @@ manager = Manager(app)
 
 @manager.command
 def reassign_all_shipments():
-    from kitchensink.extensions import fulfil
+    from .kitchensink.extensions import fulfil
 
     Shipment = fulfil.model('stock.shipment.out')
 
@@ -25,14 +25,14 @@ def reassign_all_shipments():
         )
     )
     for shipment in shipments:
-        print "Making shimpent %s wait" % shipment['id']
+        print(f"Making shimpent { shipment['id'] } wait")
         Shipment.wait([shipment['id']])
     process_waiting_shipments()
 
 
 @manager.command
 def process_waiting_shipments():
-    from kitchensink.extensions import fulfil
+    from .kitchensink.extensions import fulfil
 
     Shipment = fulfil.model('stock.shipment.out')
     shipments = list(
@@ -44,11 +44,11 @@ def process_waiting_shipments():
     )
     results = []
     for shipment in shipments:
-        print shipment
+        print(shipment)
         count = 5   # Initial count
         while count:
             if count < 5:
-                print "Retrying"
+                print("Retrying")
             try:
                 results.append(
                     Shipment.assign_try([shipment['id']])
@@ -58,25 +58,25 @@ def process_waiting_shipments():
             else:
                 break
         else:
-            print "Yuck! This one is pretty bad", shipment
+            print("Yuck! This one is pretty bad", shipment)
 
     requests.post(
         os.environ['SLACK_WEBHOOK_URL'],
         json={
-            'text': 'Tried to assign Mejuri Shipments',
+            'text': 'Tried to assign Shipments',
             'attachments': [{
                 'title': 'Assigning Shipments',
-                'thumb_url': 'https://dto508s2j2p46.cloudfront.net/assets/mejuri_label-86c1982b0d84c5017186e435ff666485.png',
+                'thumb_url': 'http://example.com/path/to/thumb.png',
                 'fields': [{
                     'title': 'Attempted',
                     'value': str(len(shipments)),
                 }, {
                     'title': 'Assigned',
-                    'value': str(len(filter(lambda r: r, results))),
+                    'value': str(len([r for r in results if r])),
                     'short': True,
                 }, {
                     'title': 'Still Waiting',
-                    'value': str(len(filter(lambda r: not r, results))),
+                    'value': str(len([r for r in results if not r])),
                     'short': True,
                 }]
             }]
