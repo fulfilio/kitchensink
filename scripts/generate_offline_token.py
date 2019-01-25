@@ -2,6 +2,7 @@ import webbrowser
 from fulfil_client.oauth import Session
 import os
 
+
 def get_token():
     Session.setup(
         os.environ['FULFIL_APP_ID'], os.environ['FULFIL_APP_SECRET']
@@ -15,10 +16,13 @@ def get_token():
     )
     webbrowser.open(authorization_url)
     # paste code here
-    code=raw_input('paste authorization code here\n')
+    code = input('paste authorization code here\n')
     token = oauth_session.get_token(code=code)
     return token
 
 
 token = get_token()
-print "\n\nToken(Please save this token into your environment as 'FULFIL_OFFLINE_ACCESS_TOKEN'):", token['offline_access_token']
+
+token_print = """ \n\nToken(Please save this token into your environment as
+            'FULFIL_OFFLINE_ACCESS_TOKEN'): """
+print(token_print, token['offline_access_token'])

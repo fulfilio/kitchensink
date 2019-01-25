@@ -48,7 +48,7 @@ def get_fulfil():
             subdomain,
             auth=BearerAuth(access_token)
         )
-    except ClientError, e:
+    except ClientError as e:
         if e.code == 401:
             # unauthorized
             flask.abort(flask.redirect(flask.url_for('user.logout')))
