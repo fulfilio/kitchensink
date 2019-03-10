@@ -23,6 +23,12 @@ cd kitchensink
 pip install -r requirements.txt
 ```
 
+### Oauth Config
+
+Login to http://auth.fulfil.io and generate oauth client credentials. For standard installation whitelisted url would be
+`http://localhost:5000/user/authorized` and app url can be left empty.
+Save `client id` and `client secret` you will need this in next step.
+
 ### Set your environment variables
 
 This controls how the app can access your Fulfil.IO account.
@@ -32,11 +38,13 @@ models needed by your app features.
 ```
 export FULFIL_APP_ID=YOUR_APP_ID
 export FULFIL_APP_SECRET=YOUR_APP_SECRET
-export FULFIL_SUBDOMAIN=YOUR_APP_SECRET
+export FULFIL_SUBDOMAIN=YOUR_SUBDOMAIN
 export FULFIL_OFFLINE_ACCESS_TOKEN=YOUR_OFFLINE_ACCESS_TOKEN
 ```
 
 ### Generating offline access token
+
+Prerequisite: make sure you have access to `YOUR_SUBDOMAIN`, before generating the offline token
 
 ```
 python scripts/generate_offline_token.py
