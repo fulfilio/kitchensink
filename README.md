@@ -40,6 +40,7 @@ export FULFIL_APP_ID=YOUR_APP_ID
 export FULFIL_APP_SECRET=YOUR_APP_SECRET
 export FULFIL_SUBDOMAIN=YOUR_SUBDOMAIN
 export FULFIL_OFFLINE_ACCESS_TOKEN=YOUR_OFFLINE_ACCESS_TOKEN
+export ENV=dev
 ```
 
 ### Generating offline access token
@@ -75,7 +76,13 @@ Shows details on when product will be in stock next.
 
 ### Heroku Deployment
 
-This repo includes a Procfile that can be used to deploy to heroku.
+This repo includes a `heroku.yml` that can be used to deploy to heroku.
+
+Because this application is using Docker, before pushing any code to Heroku, set the heroku stack to use container instead of runtime.
+
+```
+heroku stack:set container
+```
 
 ```
 heroku create
