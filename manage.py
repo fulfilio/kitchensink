@@ -4,6 +4,7 @@ import os
 from flask_script import Manager, Server, Shell
 import requests
 import fulfil_client
+import unicodecsv as csv
 
 from kitchensink.app import create_app
 
@@ -28,6 +29,23 @@ def reassign_all_shipments():
         print(f"Making shimpent { shipment['id'] } wait")
         Shipment.wait([shipment['id']])
     process_waiting_shipments()
+
+
+@manager.command
+def create_batches():
+    from kitchensink.extensions import fulfil
+    from kitchensink.shipment_batcher import create_optimal_batches
+    create_optimal_batches()
+
+
+@manager.command
+def create_batch_shipstation(filename):
+    from kitchensink.extensions import fulfil
+    from kitchensink.shipment_batcher import create_optimal_batches_from_orders
+    with open(filename, 'rb') as f:
+        data = list(csv.DictReader(f))
+        order_numbers = ['#' + l['Order - Number'] for l in data]
+    create_optimal_batches_from_orders(order_numbers)
 
 
 @manager.command
