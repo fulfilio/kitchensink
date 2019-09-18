@@ -28,7 +28,7 @@ def create_optimal_batches_from_orders(order_numbers):
     create_optimal_batches(shipments)
 
 
-def create_optimal_batches(shipments=None):
+def create_optimal_batches(shipments=None, dry=False):
     """
     Given a collection of shipments, create
     optimal batches.
@@ -42,24 +42,28 @@ def create_optimal_batches(shipments=None):
     locations = _get_locations(warehouse_id)
     print("Product locations: {}".format(len(locations)))
 
-    singles = [s for s in shipments if len(s['outgoing_moves']) == 1]
+    singles = [s for s in shipments if len(s['inventory_moves']) == 1]
     print("Single line shipments: {}".format(len(singles)))
 
     _identify_singles_batch(singles, locations)
     _identify_multi_batch(
-        [s for s in shipments if len(s['outgoing_moves']) > 1],
+        [s for s in shipments if len(s['inventory_moves']) > 1],
         locations
     )
 
     _print_batches(shipments)
 
+    if dry:
+        return
+    today = fulfil.today()
     key = lambda s: s.get('batch_name', '*Unbatched')   # noqa
     for batch_name, b_shipments in groupby(sorted(shipments, key=key), key=key):
-        ShipmentBatch.create([{
-            'name': 'DRY RUN 2 / {}'.format(batch_name,),
+        batch_ids = ShipmentBatch.create([{
+            'name': '{}/{}'.format(today.isoformat(), batch_name,),
             'warehouse': warehouse_id,
             'shipments': [('add', [s['id'] for s in b_shipments])]
         }])
+        ShipmentBatch.open(batch_ids)
 
 
 def _print_batches(shipments):
@@ -110,6 +114,7 @@ def _get_shipments(warehouse_id):
         # ('state', '=', 'waiting'),
         ('shipping_batch', '=', None),
         # ('planned_date', '=', '2019-09-12'),
+        ('carrier', '!=', None),
     ], None, None)
     return Shipment.serialize(shipment_ids)
 
@@ -153,7 +158,7 @@ def _identify_singles_batch(shipments, locations):
         ordered_unbatched.extend(unbatched[location])
     # Now create a batch for them in buckets of 16
     for index, chunk in enumerate(chunked(ordered_unbatched, BATCH_SIZE), 1):
-        _set_batch(chunk, "Assorted Batch {:0>3}".format(index))
+        _set_batch(chunk, "Assorted Single Item Batch {:0>3}".format(index))
 
 
 def _set_batch(shipments, name):

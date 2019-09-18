@@ -26,16 +26,36 @@ def reassign_all_shipments():
         )
     )
     for shipment in shipments:
-        print(f"Making shimpent { shipment['id'] } wait")
+        print("Making shimpent { shipment['id'] } wait")
         Shipment.wait([shipment['id']])
     process_waiting_shipments()
 
 
 @manager.command
-def create_batches():
+def get_stats():
+    from kitchensink.extensions import fulfil
+    Shipment = fulfil.model('stock.shipment.out')
+    warehouse_id = 18
+    domain = [
+        ('warehouse', '=', warehouse_id),
+        ('state', '=', 'assigned'),
+        # ('state', '=', 'waiting'),
+        ('shipping_batch', '=', None),
+        # ('planned_date', '=', '2019-09-12'),
+        ('carrier', '!=', None),
+    ]
+    unbatched_shipment_count = Shipment.search_count(domain)
+    print("Unbatched: {}".format(unbatched_shipment_count))
+    domain.append(('priority', 'in', ['0', '1']))
+    priority_count = Shipment.search_count(domain)
+    print("of which {} are high priority".format(priority_count))
+
+
+@manager.command
+def create_batches(dry=False):
     from kitchensink.extensions import fulfil
     from kitchensink.shipment_batcher import create_optimal_batches
-    create_optimal_batches()
+    create_optimal_batches(dry=dry)
 
 
 @manager.command
